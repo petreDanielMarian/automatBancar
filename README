@@ -1,0 +1,104 @@
+Petre Daniel Marian
+322CD
+
+Tema 2 Portocale de comunicatii - Sistem monetar de tip bancomat
+
+
+TEMA IMPLEMENTATA ARE CA PLECARE SCHELETUL LABORATORULUI 8!
+
+Am implementat doar functiile ce utilizau protocolul tcp (fara quit din server)
+
+server.c:
+
+In server.c am creat un struct ce contine datele userului, precum si cateva campuri ce 
+pastreaza socketul pe care s-au coencatat, starea in care se afla clientul si cate incercari 
+esuate de login cu pin gresit are.
+
+Ca variabile globale am creat un array de users ce va fi alocat dinamic ulterior cand aflam 
+cati useri avem.
+
+functiile implementate:
+-readFromFile(numele_fisierului) primeste ca parametru numele fisierului,
+il deschide si in functie de cati clienti avem, ii punem array-ul de useri. Am luat rand 
+cu rand din fisierul de date, le-am tokenizat si apoi am atribuit fiecarui camp ceea ce 
+trebuia.
+
+-login(nr_card, pin_card, nr_useri, socket) verifica prin tot vectorul de useri daca e cineva 
+cu acel numar de card. Daca are si pinul corect, userul se va autentifica: status-ul lui va 
+fi 1(logat), soketul de pe care s-a conectat va fi actualizat, incercarile lui de a baga 
+pin-ul vor fi resetate si este intors numarul userului din vector. In cazul in care numarul 
+de card nu este ok, functia intoarce -4. Daca introduce pinul gresit va intoarce -3, iar daca 
+e introdus greistde 3 ori, statusul lui va fi acela de blocat si functia intoarce -5. Daca 
+clientul cu acest numar de card vrea sa se conecteze si este conectat deja la server, functia 
+intoarce -2. Aceste return-uri sunt codurile de eroare si in main, return-ul va fi comparat 
+outputul functiei cu -2, -3, -4... pentru a sti ce mesaj este trimis catre client.
+
+-getClient(socket, nr_useri) cauta in toti utilizatorii si intoarce utilizatorul ce este 
+conectat de pe socketul dat.
+
+-getMoney(socket, money, nr_useri) cauta clientul conectat de pe socket-ul curent si ii 
+actualizeaza soldul. Functia intoarce -8 daca suma pe care vrea sa o retraga este mai mare 
+decat sodul si -9 daca suma ce se vrea retrasa nu este multiplu de 10. Outputul functiei este 
+comparat in main si se va trimite mesajul corespunzator clientului in functie de eroare.
+
+-main(argc, argv): citesc doar primul numar din fisier ca sa stiu cati utilizatori sunt in 
+total si apoi se apeleaza readFromFile cu al 2-lea argument al executabilului ./server. In 
+partea din while unde se primeste mesajul de la client am facut o serie de if-uri astfle: 	
+	-daca mesajul este quit, clientului i se goleste socketul, i se modifica statusul in 
+	acela de nelogat si trimite inapoi clientului mesajul cum ca deconecatrea lui este 
+	completa in server si acum el trebuie sa dea un exit(0) din ./client.
+
+	-daca mesajul este orice altceva in afara de login si utilizatorul nu este logat, se va 
+	trimite mesajul -1 catre client.
+
+	-daca mesajul este de login, se iau argumentele comenzii si apoi se transmit functiei 
+	login al carei rezutlat este salvat intr-o variabila si este comparata cu niste coduri de 
+	eroare si trimite catre client codul respectiv saaau trimite un string cu numele si 
+	prenumele clientului urmate de uvantul cheie "logged".
+
+	-daca mesajul este logout, clientului de la care s-a primit logout i se resesteaza 
+	statusul ca acesta sa nu mai apara conecatat pe server si socketul este resetat la 0.
+
+	-daca mesajul este listsold, serverul trimite un buffer cu un mesaj ce contine informatii 
+	despre soldul contului.
+
+	-daca mesajul este getmoney, se apeleaza functia getmoney, si ca la login, se compara 
+	rezultatul functie cu o serie de erori ce sunt ulterior trimise clientului sau ii este 
+	trimis un mesaj cu suma ce a fost retrasa.
+
+	-daca mesajul este putmoney, se va intoarce un mesaj ce contine suma depusa + soldul 
+	anterior.
+
+	-daca clientul este logat si se da orice alt mesaj, se va trimite un mesaj catre client 
+	cu -6.
+
+
+client.c:
+
+In client am o variabila globala ce imi zice daca clientul ce s-a conectat prin ./client este 
+logat sau nu.
+
+Initial am deschis fisierul in care trebuie sa punem log-ul comenzilor.
+
+in functie de o sa trimitem serveruli, avem o serie de if-uri: 
+	-daca ce trimit este login si cineva este logat pe acest client, se va intoarce eroarea 
+	-2 din client.
+	-daca ce trimit este logout si nu e nimeni logat, se va intoarece eroarea -1
+	-daca ce trimit este logout si clientul este logat, se va modifica variabila ce tine cont 
+	de clientul logat in 0 si se va afisa mesajul de delogare
+
+Apoi avem o serie de if-uri in funcitie de ce primim de la server:
+	-daca mesajul primit are ultimele 6 caractere egale cu "logged", se vor lua restul de 
+	caractere si se va forma mesajul de Welcome <mesaj primit>
+	-daca mesajul este una dintre erori: -1, -2,... se va scrie in fisier eroarea respectiva
+	-daca ce se primeste este quit, se va schimba variabila ce tine cont de utilizator logat, 
+	se va inchide fisierul si se va iesi din program.
+	-daca se primeste altceva se va afisa mesajul primit in buffer.
+
+
+BIBLIOGRAFIE:
+http://stackoverflow.com/questions/3889992/how-does-strtok-split-the-string-into-tokens-in-c
+https://www.tutorialspoint.com/c_standard_library/c_function_sprintf.htm
+https://www.tutorialspoint.com/cprogramming/c_file_io.htm
+https://www.tutorialspoint.com/c_standard_library/c_function_atoi.htm
+https://www.tutorialspoint.com/c_standard_library/c_function_strncmp.htm
