@@ -1,10 +1,4 @@
-Petre Daniel Marian
-322CD
-
-Tema 2 Portocale de comunicatii - Sistem monetar de tip bancomat
-
-
-TEMA IMPLEMENTATA ARE CA PLECARE SCHELETUL LABORATORULUI 8!
+Sistem monetar de tip bancomat
 
 Am implementat doar functiile ce utilizau protocolul tcp (fara quit din server)
 
